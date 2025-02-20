@@ -101,28 +101,41 @@ export async function getVitestConfigFromNuxt(
   const resolvedConfig = defu(
     // overrides
     {
-      define: {
-        ['process.env.NODE_ENV']: 'process.env.NODE_ENV',
+      test: {
+        workspace: [
+          {
+            name: 'nuxt',
+            define: {
+              ['process.env.NODE_ENV']: 'process.env.NODE_ENV',
+            },
+            environmentOptions: {
+              nuxtRuntimeConfig: applyEnv(structuredClone(options.nuxt.options.runtimeConfig), {
+                prefix: 'NUXT_',
+                env: await setupDotenv(defu(loadNuxtOptions.dotenv, {
+                  cwd: rootDir,
+                  fileName: '.env.test',
+                })),
+              }),
+              nuxtRouteRules: defu(
+                {},
+                options.nuxt.options.routeRules,
+                options.nuxt.options.nitro?.routeRules,
+              ),
+            },
+
+          },
+        ],
       },
       test: {
         dir: process.cwd(),
-        environmentOptions: {
-          nuxtRuntimeConfig: applyEnv(structuredClone(options.nuxt.options.runtimeConfig), {
-            prefix: 'NUXT_',
-            env: await setupDotenv(defu(loadNuxtOptions.dotenv, {
-              cwd: rootDir,
-              fileName: '.env.test',
-            })),
-          }),
-          nuxtRouteRules: defu(
-            {},
-            options.nuxt.options.routeRules,
-            options.nuxt.options.nitro?.routeRules,
-          ),
-        },
-        environmentMatchGlobs: [
-          ['**/*.nuxt.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', 'nuxt'],
-          ['{test,tests}/nuxt/**.*', 'nuxt'],
+        workspace: [
+          {
+            test: {
+              environment: 'nuxt',
+              name: 'nuxt',
+              include: ['**/*.nuxt.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', '{test,tests}/nuxt/**.*'],
+            },
+          },
         ],
         server: {
           deps: {
